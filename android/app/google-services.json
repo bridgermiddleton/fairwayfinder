@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "701262945529",
+    "project_id": "fairwayfinder-87d30",
+    "storage_bucket": "fairwayfinder-87d30.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:701262945529:android:f6cd471759d24d178c9628",
+        "android_client_info": {
+          "package_name": "com.example.fairwayfinder"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDofPdAYf1Xh9mYy7qndLvOIk7gsPYMhKk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
