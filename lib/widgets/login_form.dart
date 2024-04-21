@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/authentication_service.dart';
+import '../screens/home_screen.dart'; // Import the HomeScreen
 
 class LoginForm extends StatefulWidget {
   @override
@@ -11,14 +12,17 @@ class _LoginFormState extends State<LoginForm> {
   String email = '';
   String password = '';
   bool _isLoading = false;
+  bool _isLoginMode = true; // Toggle between login and signup
 
-  void _tryLogin() async {
+  void _submit() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
       });
       _formKey.currentState!.save();
-      bool result = await AuthenticationService.login(email, password);
+      bool result = _isLoginMode
+          ? await AuthenticationService.login(email, password)
+          : await AuthenticationService.signUp(email, password);
       if (result) {
         Navigator.of(context).pushReplacementNamed('/home');
       } else {
@@ -26,7 +30,10 @@ class _LoginFormState extends State<LoginForm> {
           _isLoading = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login failed. Please try again.')),
+          SnackBar(
+              content: Text(_isLoginMode
+                  ? 'Login failed. Please try again.'
+                  : 'Sign up failed. Please try again.')),
         );
       }
     }
@@ -44,12 +51,11 @@ class _LoginFormState extends State<LoginForm> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Welcome to FairwayFinder!',
+                  _isLoginMode ? 'Welcome Back!' : 'Create Account',
                   style: TextStyle(
-                    fontSize: 24.0,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF006747),
-                  ),
+                      fontSize: 24.0,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF006747)),
                 ),
                 SizedBox(height: 20),
                 TextFormField(
@@ -62,15 +68,10 @@ class _LoginFormState extends State<LoginForm> {
                     ),
                     prefixIcon: Icon(Icons.email),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    if (!value.contains('@')) {
-                      return 'Please enter a valid email';
-                    }
-                    return null;
-                  },
+                  validator: (value) =>
+                      (value == null || value.isEmpty || !value.contains('@'))
+                          ? 'Please enter a valid email'
+                          : null,
                   onSaved: (value) => email = value!,
                 ),
                 SizedBox(height: 20),
@@ -84,32 +85,41 @@ class _LoginFormState extends State<LoginForm> {
                     ),
                     prefixIcon: Icon(Icons.lock),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
-                    }
-                    return null;
-                  },
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Please enter a password'
+                      : null,
                   onSaved: (value) => password = value!,
                 ),
                 SizedBox(height: 30),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(0xFF006747),
-                    minimumSize: Size(double.infinity,
-                        50), // double.infinity is the width and 50 is the height
+                    minimumSize: Size(double.infinity, 50),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  onPressed: _isLoading ? null : _tryLogin,
+                  onPressed: _isLoading ? null : _submit,
                   child: _isLoading
                       ? CircularProgressIndicator(color: Colors.white)
-                      : Text('Login',
+                      : Text(_isLoginMode ? 'Login' : 'Sign Up',
                           style: TextStyle(
                               fontSize: 18, color: Color(0xFFFFDF00))),
                 ),
                 SizedBox(height: 15),
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _isLoginMode = !_isLoginMode;
+                    });
+                  },
+                  child: Text(
+                    _isLoginMode
+                        ? 'Create new account'
+                        : 'Have an account? Log in',
+                    style: TextStyle(color: Colors.blue),
+                  ),
+                ),
               ],
             ),
           ),

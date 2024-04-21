@@ -1,15 +1,39 @@
+buildscript {
+    ext.kotlin_version = '1.9.0'  // Ensure this version matches the version used by your dependencies
+    
+    repositories {
+        google()
+        mavenCentral()
+        // Other repositories if necessary
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:4.1.0' // Example Android Gradle plugin version
+        classpath 'com.google.gms:google-services:4.4.1' // Google Services plugin
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+    }
+}
+
 allprojects {
     repositories {
         google()
         mavenCentral()
+    }
+
+    // Add resolution strategy for all subprojects here
+    configurations.all {
+        resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+            if (details.requested.group == 'org.jetbrains.kotlin') {
+                details.useVersion kotlin_version
+            }
+        }
     }
 }
 
 rootProject.buildDir = '../build'
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
-}
-subprojects {
     project.evaluationDependsOn(':app')
 }
 

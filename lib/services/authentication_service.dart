@@ -8,8 +8,17 @@ class AuthenticationService {
       await _firebaseAuth.signInWithEmailAndPassword(
           email: email, password: password);
       return true;
-    } on FirebaseAuthException catch (e) {
-      // Handle exceptions by showing an error message or similar
+    } catch (e) {
+      return false;
+    }
+  }
+
+  static Future<bool> signUp(String email, String password) async {
+    try {
+      await _firebaseAuth.createUserWithEmailAndPassword(
+          email: email, password: password);
+      return true;
+    } catch (e) {
       return false;
     }
   }

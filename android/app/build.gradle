@@ -1,7 +1,7 @@
 plugins {
     id "com.android.application"
     // START: FlutterFire Configuration
-    id 'com.google.gms.google-services'
+    id 'com.google.gms.google-services' // This line applies the Google Services plugin
     // END: FlutterFire Configuration
     id "kotlin-android"
     id "dev.flutter.flutter-gradle-plugin"
@@ -52,6 +52,7 @@ android {
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
+        multiDexEnabled true
     }
 
     buildTypes {
@@ -67,4 +68,16 @@ flutter {
     source '../..'
 }
 
-dependencies {}
+dependencies {
+        // ... Your existing dependencies ...
+    implementation 'androidx.multidex:multidex:2.0.1'
+    // Import the Firebase BoM
+    implementation platform('com.google.firebase:firebase-bom:32.8.1')
+
+    // Add the dependencies for Firebase products you want to use
+    // When using the BoM, you don't need to specify versions for Firebase libraries
+    implementation 'com.google.firebase:firebase-analytics'
+    // Add any additional Firebase dependencies here, for example:
+    // implementation 'com.google.firebase:firebase-auth'
+    // implementation 'com.google.firebase:firebase-firestore'
+}
