@@ -3,6 +3,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'profile_page_screen.dart';
 
 class CourseDetailsPage extends StatefulWidget {
   @override
@@ -123,8 +124,25 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Find Golf Courses'),
-        centerTitle: true,
+        backgroundColor: Color(0xFF006747),
+        title:
+            Text('FairwayFinder', style: TextStyle(color: Color(0xFFFFDF00))),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.account_circle, color: Color(0xFFFFDF00)),
+            onPressed: () {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => ProfilePage()));
+            },
+          ),
+        ],
+        leading: IconButton(
+          icon: Icon(Icons.golf_course, color: Color(0xFFFFDF00)),
+          onPressed: () {
+            Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (_) => CourseDetailsPage()));
+          },
+        ),
       ),
       body: Column(
         children: [
@@ -164,13 +182,25 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
                     _cityController.text + ', ' + _stateController.text);
               }
             },
-            child: Text('Search'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor:
+                  Color(0xFF006747), // Background color // Text color
+            ),
+            child: Text(
+              'Search',
+              style: TextStyle(color: Color(0xFFFFDF00)),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
               _searchNearbyGolfCourses("near me");
             },
-            child: Text('Find Courses Near Me'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor:
+                  Color(0xFF006747), // Background color // Text color
+            ),
+            child: Text('Find Courses Near Me',
+                style: TextStyle(color: Color(0xFFFFDF00))),
           ),
           Expanded(
             child: GoogleMap(
