@@ -15,6 +15,9 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
   Location _location = Location();
   late GoogleMapController _mapController;
   Set<Marker> _markers = {};
+  static const LatLng _defaultLocation =
+      LatLng(38.0293, -78.4767); // Charlottesville, Virginia
+  LatLng _currentLocation = _defaultLocation;
 
   @override
   void initState() {
@@ -24,13 +27,51 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
 
   void _onMapCreated(GoogleMapController controller) {
     _mapController = controller;
+    _mapController
+        .animateCamera(CameraUpdate.newLatLngZoom(_currentLocation, 10));
   }
 
-  void _searchGolfCourses(String city, String state) async {
-    var query = 'golf course in $city, $state';
+  Future<void> _getUserLocation() async {
+    bool _serviceEnabled;
+    PermissionStatus _permissionGranted;
+
+    _serviceEnabled = await _location.serviceEnabled();
+    if (!_serviceEnabled) {
+      _serviceEnabled = await _location.requestService();
+      if (!_serviceEnabled) {
+        return;
+      }
+    }
+
+    _permissionGranted = await _location.hasPermission();
+    if (_permissionGranted == PermissionStatus.denied) {
+      _permissionGranted = await _location.requestPermission();
+    }
+
+    if (_permissionGranted == PermissionStatus.granted) {
+      var locationData = await _location.getLocation();
+      setState(() {
+        _currentLocation =
+            LatLng(locationData.latitude!, locationData.longitude!);
+      });
+    } else {
+      setState(() {
+        _currentLocation =
+            _defaultLocation; // Use Charlottesville if permission not granted
+      });
+    }
+
+    // Ensure the map centers on the current or default location
+    _mapController
+        .animateCamera(CameraUpdate.newLatLngZoom(_currentLocation, 10));
+  }
+
+  void _searchNearbyGolfCourses(String query) async {
     var url =
         Uri.https('maps.googleapis.com', '/maps/api/place/textsearch/json', {
-      'query': query,
+      'query': 'golf course in $query',
+      'location': '${_currentLocation.latitude},${_currentLocation.longitude}',
+      'radius': '24140', // 15 miles in meters
       'key': 'AIzaSyCvrSjE9vnztWzamdw7vBkYfC2sc2_PkVU',
     });
 
@@ -48,7 +89,8 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
           );
           _markers.add(marker);
         }
-        if (data['results'].isNotEmpty) {
+        // Zoom to include all markers
+        if (_markers.isNotEmpty) {
           _mapController.animateCamera(
             CameraUpdate.newLatLngBounds(
                 _boundsFromLatLngList(_markers.map((m) => m.position).toList()),
@@ -63,28 +105,18 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
 
   LatLngBounds _boundsFromLatLngList(List<LatLng> list) {
     assert(list.isNotEmpty, 'Cannot create bounds from empty list.');
+    double x0 = list.first.latitude;
+    double x1 = list.first.latitude;
+    double y0 = list.first.longitude;
+    double y1 = list.first.longitude;
 
-    // Initialize bounds with the first point in the list
-    var x0 = list.first.latitude;
-    var x1 = list.first.latitude;
-    var y0 = list.first.longitude;
-    var y1 = list.first.longitude;
-
-    // Extend bounds to include each point
-    for (var latLng in list) {
+    for (LatLng latLng in list) {
       if (latLng.latitude > x1) x1 = latLng.latitude;
       if (latLng.latitude < x0) x0 = latLng.latitude;
       if (latLng.longitude > y1) y1 = latLng.longitude;
       if (latLng.longitude < y0) y0 = latLng.longitude;
     }
-
     return LatLngBounds(southwest: LatLng(x0, y0), northeast: LatLng(x1, y1));
-  }
-
-  void _getUserLocation() async {
-    var locationData = await _location.getLocation();
-    _mapController.animateCamera(CameraUpdate.newLatLngZoom(
-        LatLng(locationData.latitude!, locationData.longitude!), 10));
   }
 
   @override
@@ -128,20 +160,25 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
             onPressed: () {
               if (_cityController.text.isNotEmpty &&
                   _stateController.text.isNotEmpty) {
-                _searchGolfCourses(_cityController.text, _stateController.text);
+                _searchNearbyGolfCourses(
+                    _cityController.text + ', ' + _stateController.text);
               }
             },
             child: Text('Search'),
           ),
           ElevatedButton(
-            onPressed: () => _searchGolfCourses("near me", ""),
+            onPressed: () {
+              _searchNearbyGolfCourses("near me");
+            },
             child: Text('Find Courses Near Me'),
           ),
           Expanded(
             child: GoogleMap(
               onMapCreated: _onMapCreated,
-              initialCameraPosition:
-                  CameraPosition(target: LatLng(0, 0), zoom: 10),
+              initialCameraPosition: CameraPosition(
+                target: _currentLocation,
+                zoom: 10,
+              ),
               markers: _markers,
               myLocationEnabled: true,
               myLocationButtonEnabled: true,
