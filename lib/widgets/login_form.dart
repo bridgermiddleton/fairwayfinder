@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/authentication_service.dart';
-import '../screens/home_screen.dart'; // Import the HomeScreen
+import '../screens/course_details_screen.dart'; // Import the HomeScreen
 
 class LoginForm extends StatefulWidget {
   @override
@@ -24,7 +24,7 @@ class _LoginFormState extends State<LoginForm> {
           ? await AuthenticationService.login(email, password)
           : await AuthenticationService.signUp(email, password);
       if (result) {
-        Navigator.of(context).pushReplacementNamed('/home');
+        Navigator.of(context).pushReplacementNamed('/coursedetails');
       } else {
         setState(() {
           _isLoading = false;
