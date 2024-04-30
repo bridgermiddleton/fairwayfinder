@@ -16,26 +16,33 @@ class _LoginFormState extends State<LoginForm> {
 
   void _submit() async {
     if (_formKey.currentState!.validate()) {
+      print("Form is valid, attempting to login/signup...");
       setState(() {
         _isLoading = true;
       });
       _formKey.currentState!.save();
-      bool result = _isLoginMode
+
+      print("Saved state, starting authentication...");
+      String result = _isLoginMode
           ? await AuthenticationService.login(email, password)
           : await AuthenticationService.signUp(email, password);
-      if (result) {
+      print(
+          "Authentication result: $result"); // This should log either success or the error message
+
+      if (result == "Success") {
+        print("Authentication successful, navigating to details page...");
         Navigator.of(context).pushReplacementNamed('/coursedetails');
       } else {
+        print("Authentication failed with message: $result");
         setState(() {
           _isLoading = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(_isLoginMode
-                  ? 'Login failed. Please try again.'
-                  : 'Sign up failed. Please try again.')),
+          SnackBar(content: Text(result)),
         );
       }
+    } else {
+      print("Form validation failed.");
     }
   }
 
