@@ -166,8 +166,8 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
                   child: TextField(
                     controller: _stateController,
                     decoration: InputDecoration(
-                      labelText: 'State',
-                      hintText: 'Enter a state',
+                      labelText: 'State/Country',
+                      hintText: 'Enter a state/country',
                     ),
                   ),
                 ),
