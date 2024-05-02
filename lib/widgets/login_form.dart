@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/authentication_service.dart';
-import '../screens/course_details_screen.dart'; // Import the HomeScreen
+import '../screens/home_page.dart'; // Import the HomeScreen
+import '../models/user.dart';
 
 class LoginForm extends StatefulWidget {
   @override
@@ -16,29 +17,27 @@ class _LoginFormState extends State<LoginForm> {
 
   void _submit() async {
     if (_formKey.currentState!.validate()) {
-      print("Form is valid, attempting to login/signup...");
       setState(() {
         _isLoading = true;
       });
       _formKey.currentState!.save();
 
-      print("Saved state, starting authentication...");
-      String result = _isLoginMode
+      CustomUser? user = _isLoginMode
           ? await AuthenticationService.login(email, password)
           : await AuthenticationService.signUp(email, password);
-      print(
-          "Authentication result: $result"); // This should log either success or the error message
 
-      if (result == "Success") {
-        print("Authentication successful, navigating to details page...");
-        Navigator.of(context).pushReplacementNamed('/coursedetails');
+      if (user != null) {
+        print("Authentication successful, navigating to home page...");
+        // Assuming you pass the user data to HomePage or manage it globally (e.g., via a Provider or BLoC)
+        Navigator.of(context).pushReplacementNamed('/home');
       } else {
-        print("Authentication failed with message: $result");
+        print("Authentication failed or user data not fetched");
         setState(() {
           _isLoading = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result)),
+          SnackBar(
+              content: Text('Authentication failed or user data not fetched')),
         );
       }
     } else {

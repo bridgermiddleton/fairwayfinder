@@ -5,12 +5,12 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'profile_page_screen.dart';
 
-class CourseDetailsPage extends StatefulWidget {
+class HomePage extends StatefulWidget {
   @override
-  _CourseDetailsPageState createState() => _CourseDetailsPageState();
+  _HomePageState createState() => _HomePageState();
 }
 
-class _CourseDetailsPageState extends State<CourseDetailsPage> {
+class _HomePageState extends State<HomePage> {
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _stateController = TextEditingController();
   Location _location = Location();
@@ -139,8 +139,8 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
         leading: IconButton(
           icon: Icon(Icons.golf_course, color: Color(0xFFFFDF00)),
           onPressed: () {
-            Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (_) => CourseDetailsPage()));
+            Navigator.of(context)
+                .pushReplacement(MaterialPageRoute(builder: (_) => HomePage()));
           },
         ),
       ),
