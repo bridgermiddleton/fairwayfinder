@@ -22,23 +22,29 @@ class _LoginFormState extends State<LoginForm> {
       });
       _formKey.currentState!.save();
 
-      CustomUser? user = _isLoginMode
-          ? await AuthenticationService.login(email, password)
-          : await AuthenticationService.signUp(email, password);
+      try {
+        CustomUser? user = _isLoginMode
+            ? await AuthenticationService.login(email, password)
+            : await AuthenticationService.signUp(email, password);
 
-      if (user != null) {
-        print("Authentication successful, navigating to home page...");
-        // Assuming you pass the user data to HomePage or manage it globally (e.g., via a Provider or BLoC)
-        Navigator.of(context).pushReplacementNamed('/home');
-      } else {
-        print("Authentication failed or user data not fetched");
+        if (user != null) {
+          print(
+              "Authentication and user fetch successful, navigating to home page...");
+          Navigator.of(context).pushReplacementNamed('/home');
+        } else {
+          print("Authentication successful but user data is null.");
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(
+                  'Authentication successful but failed to fetch user data.')));
+        }
+      } catch (e) {
+        print("Error during authentication or user data fetch: $e");
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
+      } finally {
         setState(() {
           _isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Authentication failed or user data not fetched')),
-        );
       }
     } else {
       print("Form validation failed.");

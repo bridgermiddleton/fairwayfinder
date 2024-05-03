@@ -41,13 +41,27 @@ class AuthenticationService {
   }
 
   static Future<CustomUser?> getCurrentUser() async {
-    User? firebaseUser = _firebaseAuth.currentUser;
+    User? firebaseUser = FirebaseAuth.instance.currentUser;
     if (firebaseUser != null) {
-      DocumentSnapshot userDoc =
-          await _firestore.collection('users').doc(firebaseUser.uid).get();
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(firebaseUser.uid)
+          .get();
       if (userDoc.exists) {
-        return CustomUser.fromMap(userDoc.data() as Map<String, dynamic>);
+        Map<String, dynamic>? userData =
+            userDoc.data() as Map<String, dynamic>?;
+        if (userData != null) {
+          print(
+              "Fetched user data: $userData"); // Log the data fetched from Firestore
+          return CustomUser.fromMap(userData);
+        } else {
+          print("User data is null for UID: ${firebaseUser.uid}");
+        }
+      } else {
+        print("No document found for UID: ${firebaseUser.uid}");
       }
+    } else {
+      print("Firebase user is null");
     }
     return null;
   }
