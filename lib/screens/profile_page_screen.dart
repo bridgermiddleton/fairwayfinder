@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'home_page.dart';
+import '../widgets/common_widgets.dart';
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -35,26 +36,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Color(0xFF006747),
-        title:
-            Text('FairwayFinder', style: TextStyle(color: Color(0xFFFFDF00))),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.account_circle, color: Color(0xFFFFDF00)),
-            onPressed: () {
-              // This button is already on the profile page, typically this would be redundant.
-            },
-          ),
-        ],
-        leading: IconButton(
-          icon: Icon(Icons.golf_course, color: Color(0xFFFFDF00)),
-          onPressed: () {
-            Navigator.of(context)
-                .pushReplacement(MaterialPageRoute(builder: (_) => HomePage()));
-          },
-        ),
-      ),
+      appBar: CommonWidgets.buildAppBar(context),
       body: Center(
         child: userData == null
             ? CircularProgressIndicator()
