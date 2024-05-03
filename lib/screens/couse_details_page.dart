@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import '../models/course.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../widgets/common_widgets.dart';
+import '../models/review.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CourseDetailsPage extends StatefulWidget {
   final String name;
@@ -19,6 +24,7 @@ class CourseDetailsPage extends StatefulWidget {
 class _CourseDetailsPageState extends State<CourseDetailsPage> {
   late Course course;
   bool isLoading = true;
+  final _reviewController = TextEditingController();
 
   @override
   void initState() {
@@ -39,12 +45,36 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
           city: widget.city,
           state: widget.state,
           reviews: []);
-      FirebaseFirestore.instance
+      await FirebaseFirestore.instance
           .collection('courses')
           .doc(widget.name)
           .set(course.toMap());
     }
     setState(() => isLoading = false);
+  }
+
+  void _submitReview() async {
+    final String userEmail = FirebaseAuth.instance.currentUser!.email!;
+    final Review newReview = Review(
+      createdByUserEmail: userEmail,
+      text: _reviewController.text,
+      courseName: widget.name,
+    );
+
+    // Update the Firestore course document with the new review
+    FirebaseFirestore.instance.collection('courses').doc(widget.name).update({
+      'reviews': FieldValue.arrayUnion([newReview.toMap()])
+    });
+
+    // Optionally update user's own document with this new review
+    FirebaseFirestore.instance.collection('users').doc(userEmail).update({
+      'reviews': FieldValue.arrayUnion([newReview.toMap()])
+    });
+
+    setState(() {
+      course.reviews.add(newReview);
+      _reviewController.clear(); // Clear the text field after submitting
+    });
   }
 
   @override
@@ -59,7 +89,6 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
     return Scaffold(
       appBar: CommonWidgets.buildAppBar(context),
       body: SingleChildScrollView(
-        // Allows the content to be scrollable
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -85,7 +114,10 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
             course.reviews.isEmpty
                 ? Text('No reviews yet',
                     style: TextStyle(fontSize: 16, color: Colors.redAccent))
-                : Column(
+                : ListView(
+                    shrinkWrap: true,
+                    physics:
+                        NeverScrollableScrollPhysics(), // Disables scroll within the ListView
                     children: course.reviews
                         .map((review) => Card(
                               margin: EdgeInsets.only(bottom: 10),
@@ -98,7 +130,7 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
                                         style: TextStyle(fontSize: 16)),
                                     SizedBox(height: 5),
                                     Text(
-                                        'Review by User ID: ${review.createdByUserId}',
+                                        'Review by: ${review.createdByUserEmail}',
                                         style: TextStyle(
                                             fontSize: 14, color: Colors.grey)),
                                   ],
@@ -107,6 +139,31 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
                             ))
                         .toList(),
                   ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Write a Review:",
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  TextField(
+                    controller: _reviewController,
+                    decoration: InputDecoration(
+                        hintText: "Your review", border: OutlineInputBorder()),
+                  ),
+                  SizedBox(height: 10),
+                  ElevatedButton(
+                      onPressed: _submitReview,
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xFF006747)),
+                      child: Text(
+                        "Submit Review",
+                        style: TextStyle(color: Color(0xFFFFDF00)),
+                      )),
+                ],
+              ),
+            ),
           ],
         ),
       ),

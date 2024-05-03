@@ -1,16 +1,16 @@
 class Review {
-  String createdByUserId;
+  String createdByUserEmail;
   String text;
   String courseName;
 
   Review(
-      {required this.createdByUserId,
+      {required this.createdByUserEmail,
       required this.text,
       required this.courseName});
 
   factory Review.fromMap(Map<String, dynamic> map) {
     return Review(
-      createdByUserId: map['createdByUserId'],
+      createdByUserEmail: map['createdByUserId'],
       text: map['text'],
       courseName: map['courseName'],
     );
@@ -18,7 +18,7 @@ class Review {
 
   Map<String, dynamic> toMap() {
     return {
-      'createdByUserId': createdByUserId,
+      'createdByUserId': createdByUserEmail,
       'text': text,
       'courseName': courseName,
     };
