@@ -56,47 +56,23 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
     setState(() => isLoading = false);
   }
 
-  Future<void> _checkWishlistStatus() async {
-    String userEmail = FirebaseAuth.instance.currentUser!.email!;
-    DocumentSnapshot userDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(userEmail)
-        .get();
-
-    if (userDoc.exists && userDoc.data() != null) {
-      // Use the custom user model to parse data
-      CustomUser currentUser =
-          CustomUser.fromMap(userDoc.data()! as Map<String, dynamic>);
-      setState(() {
-        isWishlisted = currentUser.wishlist.contains(widget.name);
-      });
-    }
-  }
+// Inside _CourseDetailsPageState class
 
   void _toggleWishlist() async {
-    String userEmail = FirebaseAuth.instance.currentUser!.email!;
+    String userUid = FirebaseAuth.instance.currentUser!.uid;
     DocumentReference userRef =
-        FirebaseFirestore.instance.collection('users').doc(userEmail);
+        FirebaseFirestore.instance.collection('users').doc(userUid);
 
-    // Check if the document exists before updating
-    DocumentSnapshot snapshot = await userRef.get();
-    if (!snapshot.exists) {
-      // Document does not exist, create it with default values
-      await userRef.set({
-        'email': userEmail, // Set the email or other initial fields as needed
-        'wishlist': [],
-        'reviews': [],
-      });
-    }
+    var courseData = course
+        .toMap(); // Assuming course is a well-defined object with a toMap method
 
-    // Now safely update the document
     if (isWishlisted) {
-      userRef.update({
-        'wishlist': FieldValue.arrayRemove([widget.name])
+      await userRef.update({
+        'wishlist': FieldValue.arrayRemove([courseData])
       });
     } else {
-      userRef.update({
-        'wishlist': FieldValue.arrayUnion([widget.name])
+      await userRef.update({
+        'wishlist': FieldValue.arrayUnion([courseData])
       });
     }
 
@@ -105,7 +81,27 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
     });
   }
 
+// Add a method to check if the course is wishlisted
+  Future<void> _checkWishlistStatus() async {
+    String userUid = FirebaseAuth.instance.currentUser!.uid;
+    DocumentSnapshot userDoc =
+        await FirebaseFirestore.instance.collection('users').doc(userUid).get();
+
+    if (userDoc.exists && userDoc.data() != null) {
+      CustomUser currentUser =
+          CustomUser.fromMap(userDoc.data()! as Map<String, dynamic>);
+      setState(() {
+        isWishlisted =
+            currentUser.wishlist.any((course) => course.name == widget.name);
+      });
+    }
+  }
+
   void _submitReview() async {
+    String userUid = FirebaseAuth.instance.currentUser!.uid;
+    DocumentReference userRef =
+        FirebaseFirestore.instance.collection('users').doc(userUid);
+
     final String userEmail = FirebaseAuth.instance.currentUser!.email!;
     final Review newReview = Review(
       createdByUserEmail: userEmail,
@@ -113,21 +109,31 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
       courseName: widget.name,
     );
 
-    // Update the Firestore course document with the new review
-    FirebaseFirestore.instance.collection('courses').doc(widget.name).update({
-      'reviews': FieldValue.arrayUnion([newReview.toMap()])
-    });
+    try {
+      // Prepare the review map once to use in both updates
+      Map<String, dynamic> reviewMap = newReview.toMap();
 
-    // Optionally update user's own document with this new review
-    FirebaseFirestore.instance.collection('users').doc(userEmail).update({
-      'reviews': FieldValue.arrayUnion([newReview.toMap()])
-    });
+      // Update the Firestore course document with the new review
+      await FirebaseFirestore.instance
+          .collection('courses')
+          .doc(widget.name)
+          .update({
+        'reviews': FieldValue.arrayUnion([reviewMap])
+      });
 
-    setState(() {
-      course.reviews.add(newReview);
-      isWishlisted = !isWishlisted;
-      _reviewController.clear(); // Clear the text field after submitting
-    });
+      // Update the user's own document with this new review
+      await userRef.update({
+        'reviews': FieldValue.arrayUnion([reviewMap])
+      });
+
+      // Update UI if successful
+      setState(() {
+        course.reviews.add(newReview);
+        _reviewController.clear();
+      });
+    } catch (error) {
+      print("Error submitting review: $error");
+    }
   }
 
   @override

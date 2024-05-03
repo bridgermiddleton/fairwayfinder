@@ -1,9 +1,10 @@
 import 'review.dart';
+import 'course.dart';
 
 class CustomUser {
   String uid;
   String email;
-  List<String> wishlist; // List of course names
+  List<Course> wishlist; // List of course names
   List<Review> reviews;
 
   CustomUser({
@@ -20,7 +21,7 @@ class CustomUser {
     return CustomUser(
       uid: map['uid'] as String,
       email: map['email'] as String,
-      wishlist: List<String>.from(map['wishlist'] as List<dynamic>? ?? []),
+      wishlist: List<Course>.from(map['wishlist'] as List<dynamic>? ?? []),
       reviews: (map['reviews'] as List<dynamic>? ?? [])
           .map((reviewMap) => Review.fromMap(reviewMap as Map<String, dynamic>))
           .toList(),

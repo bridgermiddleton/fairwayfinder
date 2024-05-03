@@ -10,7 +10,7 @@ class Review {
 
   factory Review.fromMap(Map<String, dynamic> map) {
     return Review(
-      createdByUserEmail: map['createdByUserId'],
+      createdByUserEmail: map['createdByUserEmail'],
       text: map['text'],
       courseName: map['courseName'],
     );
@@ -18,7 +18,7 @@ class Review {
 
   Map<String, dynamic> toMap() {
     return {
-      'createdByUserId': createdByUserEmail,
+      'createdByUserEmail': createdByUserEmail,
       'text': text,
       'courseName': courseName,
     };
