@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/user.dart';
 
 class CourseDetailsPage extends StatefulWidget {
   final String name;
@@ -24,12 +25,14 @@ class CourseDetailsPage extends StatefulWidget {
 class _CourseDetailsPageState extends State<CourseDetailsPage> {
   late Course course;
   bool isLoading = true;
+  bool isWishlisted = false; // State to manage wishlist status
   final _reviewController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _loadOrCreateCourse();
+    _checkWishlistStatus();
   }
 
   void _loadOrCreateCourse() async {
@@ -53,6 +56,55 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
     setState(() => isLoading = false);
   }
 
+  Future<void> _checkWishlistStatus() async {
+    String userEmail = FirebaseAuth.instance.currentUser!.email!;
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userEmail)
+        .get();
+
+    if (userDoc.exists && userDoc.data() != null) {
+      // Use the custom user model to parse data
+      CustomUser currentUser =
+          CustomUser.fromMap(userDoc.data()! as Map<String, dynamic>);
+      setState(() {
+        isWishlisted = currentUser.wishlist.contains(widget.name);
+      });
+    }
+  }
+
+  void _toggleWishlist() async {
+    String userEmail = FirebaseAuth.instance.currentUser!.email!;
+    DocumentReference userRef =
+        FirebaseFirestore.instance.collection('users').doc(userEmail);
+
+    // Check if the document exists before updating
+    DocumentSnapshot snapshot = await userRef.get();
+    if (!snapshot.exists) {
+      // Document does not exist, create it with default values
+      await userRef.set({
+        'email': userEmail, // Set the email or other initial fields as needed
+        'wishlist': [],
+        'reviews': [],
+      });
+    }
+
+    // Now safely update the document
+    if (isWishlisted) {
+      userRef.update({
+        'wishlist': FieldValue.arrayRemove([widget.name])
+      });
+    } else {
+      userRef.update({
+        'wishlist': FieldValue.arrayUnion([widget.name])
+      });
+    }
+
+    setState(() {
+      isWishlisted = !isWishlisted;
+    });
+  }
+
   void _submitReview() async {
     final String userEmail = FirebaseAuth.instance.currentUser!.email!;
     final Review newReview = Review(
@@ -73,6 +125,7 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
 
     setState(() {
       course.reviews.add(newReview);
+      isWishlisted = !isWishlisted;
       _reviewController.clear(); // Clear the text field after submitting
     });
   }
@@ -93,11 +146,23 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(course.name,
-                style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green)),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Text(course.name,
+                      style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green)),
+                ),
+                IconButton(
+                  icon: Icon(isWishlisted ? Icons.star : Icons.star_border,
+                      color: Colors.yellow[800]),
+                  onPressed: _toggleWishlist,
+                ),
+              ],
+            ),
             SizedBox(height: 10),
             Text('City: ${course.city}',
                 style: TextStyle(fontSize: 18, color: Colors.black54)),
