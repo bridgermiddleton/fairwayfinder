@@ -9,21 +9,20 @@ class CustomUser {
   CustomUser({
     required this.uid,
     required this.email,
-    List<String>? wishlist,
-    List<Review>? reviews,
-  })  : this.wishlist = wishlist ?? [], // Initialize with an empty list if null
-        this.reviews = reviews ?? []; // Initialize with an empty list if null
+    this.wishlist = const [],
+    this.reviews = const [],
+  });
 
   factory CustomUser.fromMap(Map<String, dynamic> map) {
     if (map['uid'] == null || map['email'] == null) {
-      throw Exception("Critical user information missing or null.");
+      throw Exception("UID or Email is missing");
     }
     return CustomUser(
-      uid: map['uid'],
-      email: map['email'],
-      wishlist: List<String>.from(map['wishlist'] ?? []),
-      reviews: (map['reviews'] as List<dynamic> ?? [])
-          .map((reviewMap) => Review.fromMap(reviewMap))
+      uid: map['uid'] as String,
+      email: map['email'] as String,
+      wishlist: List<String>.from(map['wishlist'] as List<dynamic>? ?? []),
+      reviews: (map['reviews'] as List<dynamic>? ?? [])
+          .map((reviewMap) => Review.fromMap(reviewMap as Map<String, dynamic>))
           .toList(),
     );
   }

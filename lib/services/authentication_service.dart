@@ -24,18 +24,18 @@ class AuthenticationService {
       User? user = userCredential.user;
 
       if (user != null) {
-        // Initialize the user with empty wishlist and reviews
         await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          'uid': user.uid, // Include this line to explicitly store the uid
           'email': email,
-          'name': '', // Optionally initialize name as empty
           'wishlist': [],
           'reviews': []
         });
-        return getCurrentUser();
-      } else {
-        print("Failed to create user account");
+        return getCurrentUser(); // Fetches the newly created user
       }
-    } on FirebaseAuthException catch (e) {
+
+      return null;
+    } catch (e) {
+      print("Sign Up Failed: ${e.toString()}");
       return null;
     }
   }
@@ -51,8 +51,7 @@ class AuthenticationService {
         Map<String, dynamic>? userData =
             userDoc.data() as Map<String, dynamic>?;
         if (userData != null) {
-          print(
-              "Fetched user data: $userData"); // Log the data fetched from Firestore
+          print("Fetched user data: $userData");
           return CustomUser.fromMap(userData);
         } else {
           print("User data is null for UID: ${firebaseUser.uid}");
