@@ -75,7 +75,7 @@ class _HomePageState extends State<HomePage> {
       'query': 'golf course in $query',
       'location': '${_currentLocation.latitude},${_currentLocation.longitude}',
       'radius': '24140', // 15 miles in meters
-      'key': 'AIzaSyCvrSjE9vnztWzamdw7vBkYfC2sc2_PkVU',
+      'key': 'your-google-maps-api',
     });
 
     var response = await http.get(url);

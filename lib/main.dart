@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'screens/login_screen.dart';
 import 'firebase_options.dart';
 import 'screens/home_page.dart';
+import './services/api_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Config.load();
   runApp(MyApp());
 }
 
