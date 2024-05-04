@@ -59,41 +59,53 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
 // Inside _CourseDetailsPageState class
 
   void _toggleWishlist() async {
-    String userUid = FirebaseAuth.instance.currentUser!.uid;
-    DocumentReference userRef =
-        FirebaseFirestore.instance.collection('users').doc(userUid);
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      DocumentReference userRef =
+          FirebaseFirestore.instance.collection('users').doc(user.uid);
 
-    var courseData = course
-        .toMap(); // Assuming course is a well-defined object with a toMap method
+      FirebaseFirestore.instance.runTransaction((transaction) async {
+        DocumentSnapshot snapshot = await transaction.get(userRef);
 
-    if (isWishlisted) {
-      await userRef.update({
-        'wishlist': FieldValue.arrayRemove([courseData])
-      });
-    } else {
-      await userRef.update({
-        'wishlist': FieldValue.arrayUnion([courseData])
+        if (snapshot.exists) {
+          var currentWishlist = List<Course>.from(
+              snapshot.get('wishlist').map((item) => Course.fromMap(item)));
+          if (currentWishlist.any((c) => c.name == widget.name)) {
+            // Remove from wishlist
+            transaction.update(userRef, {
+              'wishlist': FieldValue.arrayRemove([course.toMap()])
+            });
+          } else {
+            // Add to wishlist
+            transaction.update(userRef, {
+              'wishlist': FieldValue.arrayUnion([course.toMap()])
+            });
+          }
+        }
+
+        setState(() {
+          isWishlisted = !isWishlisted;
+        });
       });
     }
-
-    setState(() {
-      isWishlisted = !isWishlisted;
-    });
   }
 
 // Add a method to check if the course is wishlisted
-  Future<void> _checkWishlistStatus() async {
-    String userUid = FirebaseAuth.instance.currentUser!.uid;
-    DocumentSnapshot userDoc =
-        await FirebaseFirestore.instance.collection('users').doc(userUid).get();
+  void _checkWishlistStatus() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
 
-    if (userDoc.exists && userDoc.data() != null) {
-      CustomUser currentUser =
-          CustomUser.fromMap(userDoc.data()! as Map<String, dynamic>);
-      setState(() {
-        isWishlisted =
-            currentUser.wishlist.any((course) => course.name == widget.name);
-      });
+      if (userDoc.exists) {
+        CustomUser currentUser =
+            CustomUser.fromMap(userDoc.data() as Map<String, dynamic>);
+        setState(() {
+          isWishlisted = currentUser.wishlist.any((c) => c.name == widget.name);
+        });
+      }
     }
   }
 
