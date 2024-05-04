@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/authentication_service.dart';
-import '../screens/course_details_screen.dart'; // Import the HomeScreen
+import '../screens/home_page.dart'; // Import the HomeScreen
+import '../models/user.dart';
 
 class LoginForm extends StatefulWidget {
   @override
@@ -20,22 +21,33 @@ class _LoginFormState extends State<LoginForm> {
         _isLoading = true;
       });
       _formKey.currentState!.save();
-      bool result = _isLoginMode
-          ? await AuthenticationService.login(email, password)
-          : await AuthenticationService.signUp(email, password);
-      if (result) {
-        Navigator.of(context).pushReplacementNamed('/coursedetails');
-      } else {
+
+      try {
+        CustomUser? user = _isLoginMode
+            ? await AuthenticationService.login(email, password)
+            : await AuthenticationService.signUp(email, password);
+
+        if (user != null) {
+          print(
+              "Authentication and user fetch successful, navigating to home page...");
+          Navigator.of(context).pushReplacementNamed('/home');
+        } else {
+          print("Authentication successful but user data is null.");
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(
+                  'Authentication successful but failed to fetch user data.')));
+        }
+      } catch (e) {
+        print("Error during authentication or user data fetch: $e");
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
+      } finally {
         setState(() {
           _isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(_isLoginMode
-                  ? 'Login failed. Please try again.'
-                  : 'Sign up failed. Please try again.')),
-        );
       }
+    } else {
+      print("Form validation failed.");
     }
   }
 

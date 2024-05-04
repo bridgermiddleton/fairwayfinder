@@ -4,13 +4,15 @@ import 'package:location/location.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'profile_page_screen.dart';
+import 'couse_details_page.dart';
+import '../widgets/common_widgets.dart';
 
-class CourseDetailsPage extends StatefulWidget {
+class HomePage extends StatefulWidget {
   @override
-  _CourseDetailsPageState createState() => _CourseDetailsPageState();
+  _HomePageState createState() => _HomePageState();
 }
 
-class _CourseDetailsPageState extends State<CourseDetailsPage> {
+class _HomePageState extends State<HomePage> {
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _stateController = TextEditingController();
   Location _location = Location();
@@ -73,7 +75,7 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
       'query': 'golf course in $query',
       'location': '${_currentLocation.latitude},${_currentLocation.longitude}',
       'radius': '24140', // 15 miles in meters
-      'key': 'AIzaSyCvrSjE9vnztWzamdw7vBkYfC2sc2_PkVU',
+      'key': 'your-google-maps-api',
     });
 
     var response = await http.get(url);
@@ -86,11 +88,14 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
             markerId: MarkerId(result['place_id']),
             position: LatLng(result['geometry']['location']['lat'],
                 result['geometry']['location']['lng']),
-            infoWindow: InfoWindow(title: result['name']),
+            infoWindow: InfoWindow(
+              title: result['name'],
+              onTap: () =>
+                  _onTapCourse(result['name'], result['formatted_address']),
+            ),
           );
           _markers.add(marker);
         }
-        // Zoom to include all markers
         if (_markers.isNotEmpty) {
           _mapController.animateCamera(
             CameraUpdate.newLatLngBounds(
@@ -102,6 +107,26 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
     } else {
       print('Failed to fetch golf courses: ${response.body}');
     }
+  }
+
+  void _onTapCourse(String name, String formattedAddress) {
+    // Typical formatted address: "123 Main St, Springfield, IL 12345, USA"
+    // Split the string by commas and extract relevant parts
+    List<String> parts = formattedAddress.split(',');
+    String city = '';
+    String state = '';
+
+    if (parts.length >= 3) {
+      city = parts[1].trim(); // The second part should be the city
+      state = parts[2].trim().split(
+          ' ')[0]; // The third part should be state followed by postal code
+    }
+
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) =>
+                CourseDetailsPage(name: name, city: city, state: state)));
   }
 
   LatLngBounds _boundsFromLatLngList(List<LatLng> list) {
@@ -123,27 +148,7 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Color(0xFF006747),
-        title:
-            Text('FairwayFinder', style: TextStyle(color: Color(0xFFFFDF00))),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.account_circle, color: Color(0xFFFFDF00)),
-            onPressed: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => ProfilePage()));
-            },
-          ),
-        ],
-        leading: IconButton(
-          icon: Icon(Icons.golf_course, color: Color(0xFFFFDF00)),
-          onPressed: () {
-            Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (_) => CourseDetailsPage()));
-          },
-        ),
-      ),
+      appBar: CommonWidgets.buildAppBar(context),
       body: Column(
         children: [
           Row(
