@@ -35,13 +35,8 @@ class _ProfilePageState extends State<ProfilePage> {
         var data = userDoc.data() as Map<String, dynamic>;
         setState(() {
           userData = data;
-          // Handle null cases for lists
-          if (data['wishlist'] == null) {
-            userData!['wishlist'] = [];
-          }
-          if (data['reviews'] == null) {
-            userData!['reviews'] = [];
-          }
+          userData!['wishlist'] ??= [];
+          userData!['reviews'] ??= [];
         });
       }
     }
@@ -79,15 +74,15 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CommonWidgets.buildAppBar(context),
-      body: Center(
-        child: userData == null
-            ? CircularProgressIndicator()
-            : SingleChildScrollView(
-                padding: EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    FutureBuilder<String?>(
+      body: userData == null
+          ? Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: FutureBuilder<String?>(
                       future: getProfilePictureUrl(),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
@@ -106,57 +101,60 @@ class _ProfilePageState extends State<ProfilePage> {
                         );
                       },
                     ),
-                    SizedBox(height: 20),
-                    Text('Email: ${user!.email}',
-                        style: TextStyle(fontSize: 20)),
-                    Divider(),
-                    Text('Wishlist',
+                  ),
+                  SizedBox(height: 20),
+                  Text('Email: ${user!.email}',
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  Divider(thickness: 2),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text('Wishlist',
                         style: TextStyle(
                             fontSize: 20, fontWeight: FontWeight.bold)),
-                    ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: userData!['wishlist'].length,
-                      itemBuilder: (context, index) {
-                        Course course =
-                            Course.fromMap(userData!['wishlist'][index]);
-                        return ListTile(
-                          title: Text(course
-                              .name), // Display course name instead of the entire Course object
-                          onTap: () {
-                            // Navigate to CourseDetailsPage with parameters from the Course object
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => CourseDetailsPage(
-                                    name: course.name,
-                                    city: course.city,
-                                    state: course.state,
-                                  ),
-                                ));
-                          },
-                        );
-                      },
-                    ),
-                    Divider(),
-                    Text('My Reviews',
+                  ),
+                  userData!['wishlist'].isEmpty
+                      ? Text("No wishlist items",
+                          style: TextStyle(fontStyle: FontStyle.italic))
+                      : Column(
+                          children: userData!['wishlist'].map<Widget>((item) {
+                            Course course = Course.fromMap(item);
+                            return ListTile(
+                              title: Text(
+                                course.name,
+                                style: TextStyle(color: Colors.blue),
+                              ),
+                              onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) => CourseDetailsPage(
+                                          name: course.name,
+                                          city: course.city,
+                                          state: course.state))),
+                            );
+                          }).toList(),
+                        ),
+                  Divider(thickness: 2),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text('My Reviews',
                         style: TextStyle(
                             fontSize: 20, fontWeight: FontWeight.bold)),
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
-                      itemCount: userData!['reviews'].length,
-                      itemBuilder: (context, index) {
-                        var review = userData!['reviews'][index];
-                        return ListTile(
-                          title: Text(review['text']),
-                          subtitle: Text('Course: ${review['courseName']}'),
-                        );
-                      },
-                    ),
-                  ],
-                ),
+                  ),
+                  userData!['reviews'].isEmpty
+                      ? Text("No reviews posted yet",
+                          style: TextStyle(fontStyle: FontStyle.italic))
+                      : Column(
+                          children: userData!['reviews'].map<Widget>((review) {
+                            return ListTile(
+                              title: Text(review['text']),
+                              subtitle: Text('Course: ${review['courseName']}'),
+                            );
+                          }).toList(),
+                        ),
+                ],
               ),
-      ),
+            ),
     );
   }
 }

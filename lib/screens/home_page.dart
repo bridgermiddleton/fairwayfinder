@@ -171,8 +171,8 @@ class _HomePageState extends State<HomePage> {
                   child: TextField(
                     controller: _stateController,
                     decoration: InputDecoration(
-                      labelText: 'State/Country',
-                      hintText: 'Enter a state/country',
+                      labelText: 'State',
+                      hintText: 'Enter a state',
                     ),
                   ),
                 ),

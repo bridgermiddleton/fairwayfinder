@@ -21,7 +21,11 @@ class CustomUser {
     return CustomUser(
       uid: map['uid'] as String,
       email: map['email'] as String,
-      wishlist: List<Course>.from(map['wishlist'] as List<dynamic>? ?? []),
+      // Correctly parse the wishlist field
+      wishlist: (map['wishlist'] as List<dynamic>? ?? [])
+          .map((item) => Course.fromMap(item as Map<String, dynamic>))
+          .toList(),
+      // Correctly parse the reviews field
       reviews: (map['reviews'] as List<dynamic>? ?? [])
           .map((reviewMap) => Review.fromMap(reviewMap as Map<String, dynamic>))
           .toList(),

@@ -61,31 +61,42 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
   void _toggleWishlist() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      DocumentReference userRef =
+      final userRef =
           FirebaseFirestore.instance.collection('users').doc(user.uid);
+      final courseMap = Course(
+          name: widget.name,
+          city: widget.city,
+          state: widget.state,
+          reviews: [] // Pass an empty list or fetch current reviews if necessary.
+          ).toMap();
 
-      FirebaseFirestore.instance.runTransaction((transaction) async {
+      await FirebaseFirestore.instance.runTransaction((transaction) async {
         DocumentSnapshot snapshot = await transaction.get(userRef);
-
         if (snapshot.exists) {
-          var currentWishlist = List<Course>.from(
-              snapshot.get('wishlist').map((item) => Course.fromMap(item)));
-          if (currentWishlist.any((c) => c.name == widget.name)) {
-            // Remove from wishlist
+          List<dynamic> wishlist = snapshot.get('wishlist');
+          bool found = false;
+
+          for (var course in wishlist) {
+            if (Course.fromMap(course).name == widget.name) {
+              found = true;
+              break;
+            }
+          }
+
+          if (found) {
             transaction.update(userRef, {
-              'wishlist': FieldValue.arrayRemove([course.toMap()])
+              'wishlist': FieldValue.arrayRemove([courseMap])
             });
           } else {
-            // Add to wishlist
             transaction.update(userRef, {
-              'wishlist': FieldValue.arrayUnion([course.toMap()])
+              'wishlist': FieldValue.arrayUnion([courseMap])
             });
           }
         }
+      });
 
-        setState(() {
-          isWishlisted = !isWishlisted;
-        });
+      setState(() {
+        isWishlisted = !isWishlisted;
       });
     }
   }
@@ -94,16 +105,17 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
   void _checkWishlistStatus() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+      final userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .get();
 
       if (userDoc.exists) {
-        CustomUser currentUser =
-            CustomUser.fromMap(userDoc.data() as Map<String, dynamic>);
+        List<dynamic> wishlistMaps = userDoc.data()?['wishlist'] ?? [];
+        List<Course> wishlist =
+            wishlistMaps.map((map) => Course.fromMap(map)).toList();
         setState(() {
-          isWishlisted = currentUser.wishlist.any((c) => c.name == widget.name);
+          isWishlisted = wishlist.any((course) => course.name == widget.name);
         });
       }
     }
@@ -175,10 +187,12 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
                           color: Colors.green)),
                 ),
                 IconButton(
-                  icon: Icon(isWishlisted ? Icons.star : Icons.star_border,
-                      color: Colors.yellow[800]),
+                  icon: Icon(
+                    isWishlisted ? Icons.star : Icons.star_border,
+                    color: isWishlisted ? Colors.yellow : Colors.grey,
+                  ),
                   onPressed: _toggleWishlist,
-                ),
+                )
               ],
             ),
             SizedBox(height: 10),
